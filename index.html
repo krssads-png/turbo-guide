@@ -88,7 +88,7 @@ button{
 </div>
 
 <script>
-const STORAGE_KEY = "shift_calc_full_v2";
+const STORAGE_KEY = "shift_calc_full_v3";
 
 function defaultState(){
   return {
@@ -180,15 +180,15 @@ function render(){
 }
 
 function calc(){
-  state.rate = parseFloat(document.getElementById("rate").value) || 0;
-  state.bonus = parseFloat(document.getElementById("bonus").value) || 0;
-  state.tipsrate = parseFloat(document.getElementById("tipsrate").value) || 0;
+  const rateValue = parseFloat(document.getElementById("rate").value) || 0;
+  const bonusValue = parseFloat(document.getElementById("bonus").value) || 0;
+  const tipsRateValue = parseFloat(document.getElementById("tipsrate").value) || 0;
 
-  let rate = state.rate;
-  let bonus = state.bonus;
-  let tipsrate = state.tipsrate;
+  state.rate = rateValue;
+  state.bonus = bonusValue;
+  state.tipsrate = tipsRateValue;
 
-  let nightRate = rate * (1 + bonus / 100);
+  const nightRate = rateValue * (1 + bonusValue / 100);
 
   let pay = 0;
   let tips = 0;
@@ -199,7 +199,7 @@ function calc(){
 
     if(e < s) e += 1440;
 
-    let hours = (e - s) / 60;
+    const hours = (e - s) / 60;
     let night = 0;
 
     if(s < 1380 && e > 1380){
@@ -210,10 +210,10 @@ function calc(){
       night += (e - 1440) / 60;
     }
 
-    let normal = hours - night;
+    const normal = hours - night;
 
-    pay += normal * rate + night * nightRate;
-    tips += hours * tipsrate;
+    pay += normal * rateValue + night * nightRate;
+    tips += hours * tipsRateValue;
   });
 
   document.getElementById("pay").innerText = pay.toFixed(2);
@@ -224,7 +224,11 @@ function calc(){
 }
 
 document.addEventListener("input", function(e){
-  if(e.target.id === "rate" || e.target.id === "bonus" || e.target.id === "tipsrate"){
+  if(
+    e.target.id === "rate" ||
+    e.target.id === "bonus" ||
+    e.target.id === "tipsrate"
+  ){
     calc();
   }
 });
