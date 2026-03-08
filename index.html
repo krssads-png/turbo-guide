@@ -3,178 +3,211 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Shift Calculator</title>
+
 <style>
+
 body{
-    font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial;
-    padding:20px;
-    background:#0f0f10;
-    color:#f2f2f2;
+font-family:-apple-system;
+background:#111;
+color:white;
+padding:20px;
 }
-h1{font-size:24px}
+
 .card{
-    background:#1c1c1e;
-    border-radius:14px;
-    padding:16px;
-    margin-bottom:14px;
+background:#1c1c1e;
+padding:15px;
+border-radius:14px;
+margin-bottom:12px;
 }
-label{font-size:14px;color:#c7c7cc}
+
 input{
-    padding:8px;
-    margin-top:4px;
-    margin-bottom:10px;
-    width:100%;
-    border-radius:8px;
-    border:1px solid #333;
-    background:#2c2c2e;
-    color:white;
+width:100%;
+padding:10px;
+margin-top:5px;
+margin-bottom:10px;
+background:#2c2c2e;
+color:white;
+border:none;
+border-radius:8px;
 }
+
 button{
-    padding:10px 14px;
-    border:none;
-    border-radius:10px;
-    background:#0a84ff;
-    color:white;
-    font-size:14px;
+padding:10px;
+border:none;
+border-radius:10px;
+font-size:16px;
 }
-.delete{
-    background:#ff453a;
-    margin-top:6px;
+
+.add{
+background:#0a84ff;
+color:white;
+width:100%;
+margin-top:10px;
 }
-.total{
-    font-size:18px;
-    font-weight:600;
+
+.del{
+background:#ff453a;
+color:white;
+margin-top:10px;
+width:100%;
 }
-.small{
-    color:#a1a1a6;
-    font-size:13px;
-}
+
 </style>
 </head>
+
 <body>
 
-<h1>💰 Калькулятор смен</h1>
+<h2>Калькулятор смен</h2>
 
 <div class="card">
-<label>Ставка (€)</label>
-<input id="rate" type="number" step="0.01" value="13.50">
 
-<label>Ночная доплата (%) после 23:00</label>
-<input id="bonus" type="number" value="25">
+Ставка €/ч
+<input id="rate" value="13.5">
 
-<label>Чаевые за час (€)</label>
-<input id="tipsRate" type="number" step="0.01" value="0.50">
+Доплата % после 23:00
+<input id="bonus" value="25">
+
+Чаевые €/ч
+<input id="tipsrate" value="0.5">
+
 </div>
 
 <div id="shifts"></div>
 
-<button onclick="addShift()">+ Добавить смену</button>
+<button class="add" onclick="addShift()">+ Добавить смену</button>
 
-<div class="card total">
-<div>💵 Зарплата: <span id="pay">0</span> €</div>
-<div>🪙 Чаевые: <span id="tips">0</span> €</div>
-<div>🧾 Всего: <span id="total">0</span> €</div>
+<div class="card">
+
+💵 Зарплата: <span id="pay">0</span> €<br>
+🪙 Чаевые: <span id="tips">0</span> €<br>
+🧾 Всего: <span id="total">0</span> €
+
 </div>
 
 <script>
-let shifts=[]
+
+let shifts = JSON.parse(localStorage.getItem("shifts") || "[]")
+
+if(shifts.length==0){
+shifts=[
+{start:"16:00",end:"01:00"},
+{start:"19:00",end:"04:00"},
+{start:"19:00",end:"01:00"}
+]
+}
+
+function save(){
+localStorage.setItem("shifts",JSON.stringify(shifts))
+}
 
 function addShift(){
-    shifts.push({start:"19:00",end:"01:00"})
-    render()
+
+shifts.push({start:"19:00",end:"01:00"})
+save()
+render()
+
 }
 
-function removeShift(i){
-    shifts.splice(i,1)
-    render()
+function delShift(i){
+
+shifts.splice(i,1)
+save()
+render()
+
 }
 
-function hoursBetween(start,end){
-    let [sh,sm]=start.split(":").map(Number)
-    let [eh,em]=end.split(":").map(Number)
+function minutes(t){
 
-    let s=sh+sm/60
-    let e=eh+em/60
+let p=t.split(":")
+return p[0]*60+parseInt(p[1])
 
-    if(e<s) e+=24
-    return e-s
-}
-
-function nightHours(start,end){
-    let [sh,sm]=start.split(":").map(Number)
-    let [eh,em]=end.split(":").map(Number)
-
-    let s=sh+sm/60
-    let e=eh+em/60
-
-    if(e<s) e+=24
-
-    let nightStart=23
-    let night=0
-
-    for(let t=s;t<e;t+=0.01){
-        if((t%24)>=nightStart) night+=0.01
-    }
-
-    return night
 }
 
 function render(){
 
-let container=document.getElementById("shifts")
-container.innerHTML=""
+let s=document.getElementById("shifts")
+s.innerHTML=""
 
-shifts.forEach((shift,i)=>{
+shifts.forEach((sh,i)=>{
 
-let div=document.createElement("div")
-div.className="card"
+s.innerHTML+=`
 
-div.innerHTML=`
-<label>Начало</label>
-<input type="time" value="${shift.start}" onchange="updateStart(${i},this.value)">
+<div class="card">
 
-<label>Конец</label>
-<input type="time" value="${shift.end}" onchange="updateEnd(${i},this.value)">
+Начало
+<input type="time" value="${sh.start}" onchange="changeStart(${i},this.value)">
 
-<button class="delete" onclick="removeShift(${i})">Удалить</button>
+Конец
+<input type="time" value="${sh.end}" onchange="changeEnd(${i},this.value)">
+
+<button class="del" onclick="delShift(${i})">Удалить</button>
+
+</div>
+
 `
 
-container.appendChild(div)
 })
 
-calculate()
+calc()
+
 }
 
-function updateStart(i,val){
-shifts[i].start=val
-calculate()
+function changeStart(i,v){
+shifts[i].start=v
+save()
+calc()
 }
 
-function updateEnd(i,val){
-shifts[i].end=val
-calculate()
+function changeEnd(i,v){
+shifts[i].end=v
+save()
+calc()
 }
 
-function calculate(){
+function calc(){
 
-let rate=parseFloat(document.getElementById("rate").value)
-let bonus=parseFloat(document.getElementById("bonus").value)/100
-let tipsRate=parseFloat(document.getElementById("tipsRate").value)
+let rate=parseFloat(rate.value)
+let bonus=parseFloat(bonus.value)
+let tipsrate=parseFloat(tipsrate.value)
 
-let nightRate=rate*(1+bonus)
+localStorage.setItem("rate",rate)
+localStorage.setItem("bonus",bonus)
+localStorage.setItem("tipsrate",tipsrate)
+
+let nightRate=rate*(1+bonus/100)
 
 let pay=0
 let tips=0
 
-shifts.forEach(s=>{
+shifts.forEach(sh=>{
 
-let totalHours=hoursBetween(s.start,s.end)
-let night=nightHours(s.start,s.end)
-let normal=totalHours-night
+let s=minutes(sh.start)
+let e=minutes(sh.end)
 
-pay+=normal*rate + night*nightRate
-tips+=totalHours*tipsRate
+if(e<s)e+=1440
+
+let hours=(e-s)/60
+
+let night=0
+
+if(s<1380 && e>1380){
+
+night+=(Math.min(e,1440)-Math.max(s,1380))/60
+
+}
+
+if(e>1440){
+
+night+=(e-1440)/60
+
+}
+
+let normal=hours-night
+
+pay+=normal*rate+night*nightRate
+tips+=hours*tipsrate
 
 })
 
@@ -184,7 +217,14 @@ document.getElementById("total").innerText=(pay+tips).toFixed(2)
 
 }
 
-addShift()
+document.addEventListener("input",calc)
+
+rate.value=localStorage.getItem("rate")||13.5
+bonus.value=localStorage.getItem("bonus")||25
+tipsrate.value=localStorage.getItem("tipsrate")||0.5
+
+render()
+
 </script>
 
 </body>
